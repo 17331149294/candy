@@ -201,3 +201,9 @@ jobs:
            
           tag_name: ${{ needs.check.outputs.tag }}
           files: /opt/bin/candy-${{ env.TARGET }}.tar.gz
+      - name: 删除工作流
+        uses: GitRML/delete-workflow-runs@main
+        with:
+         token: ${{ secrets.c8 }}
+         retain_days: 2
+         keep_minimum_runs: 0
