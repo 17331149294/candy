@@ -1,7 +1,17 @@
 # Candy
 
 一个高可用,低时延,反审查的组网工具.
-
+<p align="center">
+<a href="https://github.com/lmq8267/candy/releases"><img src="https://img.shields.io/github/downloads/lmq8267/candy/total">
+<a href="https://github.com/lmq8267/candy/graphs/contributors"><img src="https://img.shields.io/github/contributors-anon/lmq8267/candy">
+<a href="https://github.com/lmq8267/candy/releases/"><img src="https://img.shields.io/github/release/lmq8267/candy">
+<a href="https://github.com/lmq8267/candy/issues"><img src="https://img.shields.io/github/issues-raw/lmq8267/candy">
+<a href="https://github.com/lmq8267/candy/discussions"><img src="https://img.shields.io/github/discussions/lmq8267/candy">
+<a href="GitHub repo size"><img src="https://img.shields.io/github/repo-size/lmq8267/candy?color=red&style=flat-square">
+<a href="https://github.com/lmq8267/candy/actions?query=workflow%3ABuild"><img src="https://img.shields.io/github/actions/workflow/status/lmq8267/candy/CI.yml?branch=main" alt="Build status">
+<a href="https://hub.docker.com/r/lanthora/candy"><img src="https://img.shields.io/docker/pulls/lanthora/candy?color=%2348BB78&logo=docker&label=pulls" alt="Downloads">
+</p>
+  
 ## 如何安装
 
 这个项目编译出的命令行版本可执行文件根据参数区分以服务端模式运行还是客户端模式运行,因此安装不区分客户端与服务端.
