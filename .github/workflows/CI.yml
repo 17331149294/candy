@@ -199,7 +199,7 @@ jobs:
 
            **[官方更新说明](https://github.com/lanthora/candy/releases)**
            
-          tag_name: ${{ needs.check.outputs.tag }}
+          tag_name: ${{ needs.check.outputs.ver }}
           files: /opt/bin/candy-${{ env.TARGET }}.tar.gz
       - name: 删除工作流
         uses: GitRML/delete-workflow-runs@main
