@@ -44,8 +44,8 @@ jobs:
             OPENSSL_TARGET: linux-mips32
           - TARGET: i686-linux-musl
             OPENSSL_TARGET: linux-generic32
-          - TARGET: x86_64-linux-musl
-            OPENSSL_TARGET: linux-x86_64
+          #- TARGET: x86_64-linux-musl
+            #OPENSSL_TARGET: linux-x86_64
     runs-on: ubuntu-latest
     env:
       OPENSSL_TARGET: ${{ matrix.OPENSSL_TARGET }}
@@ -61,7 +61,6 @@ jobs:
           wget -q -c https://musl.cc/${{ env.TARGET }}-cross.tgz -P /opt/musl_gcc/
           tar zxf /opt/musl_gcc/${{ env.TARGET }}-cross.tgz -C /opt/musl_gcc/
           cd /opt/musl_gcc/${{ env.TARGET }}-cross/lib/gcc/${{ env.TARGET }}/11.2.1
-          sudo rm -rf /usr/include/*.h
           
           #克隆candy
           git clone -b ${{ needs.check.outputs.ver }} https://github.com/lanthora/candy /opt/candy
@@ -127,17 +126,17 @@ jobs:
 
           cd /opt/googletest
           echo "################################编译uriparser的test依赖库##################################"
-          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DCMAKE_CXX_FLAGS="-static-libgcc"  -DBUILD_SHARED_LIBS=OFF .
+          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DBUILD_SHARED_LIBS=OFF .
           make && sudo make install
           
           cd /opt/uriparser
           echo "################################编译uriparser依赖库######################################"
-          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DCMAKE_CXX_FLAGS="-static-libgcc"  -DBUILD_SHARED_LIBS=OFF .
+          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DBUILD_SHARED_LIBS=OFF .
           make && sudo make install
           
           cd /opt/fmt
           echo "##############################编译fmt依赖库####################################"
-          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DCMAKE_CXX_FLAGS="-static-libgcc"  .
+          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake .
           make && sudo make install
 
           cd /opt/spdlog
@@ -198,7 +197,7 @@ jobs:
           body: |
            > ### 编译时间： ${{ env.build_time }}
 
-           压缩包里包含：
+           *.tar.gz二进制压缩包里包含：
 
            - candy 原版程序
            - candy_strip 剥离后的程序
