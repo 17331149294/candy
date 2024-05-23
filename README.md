@@ -1,6 +1,4 @@
 # Candy
-
-一个高可用,低时延,反审查的组网工具.
 <p align="center">
 <a href="https://github.com/lmq8267/candy/releases"><img src="https://img.shields.io/github/downloads/lmq8267/candy/total">
 <a href="https://github.com/lmq8267/candy/graphs/contributors"><img src="https://img.shields.io/github/contributors-anon/lmq8267/candy">
@@ -11,6 +9,8 @@
 <a href="https://github.com/lmq8267/candy/actions?query=workflow%3ABuild"><img src="https://img.shields.io/github/actions/workflow/status/lmq8267/candy/CI.yml?branch=main" alt="Build status">
 <a href="https://hub.docker.com/r/lanthora/candy"><img src="https://img.shields.io/docker/pulls/lanthora/candy?color=%2348BB78&logo=docker&label=pulls" alt="Downloads">
 </p>
+
+一个高可用,低时延,反审查的组网工具.
   
 ## 如何安装
 
