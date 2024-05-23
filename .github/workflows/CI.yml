@@ -44,8 +44,8 @@ jobs:
             OPENSSL_TARGET: linux-mips32
           - TARGET: i686-linux-musl
             OPENSSL_TARGET: linux-generic32
-          - TARGET: x86_64-linux-musl
-            OPENSSL_TARGET: linux-x86_64
+          #- TARGET: x86_64-linux-musl
+            #OPENSSL_TARGET: linux-x86_64
     runs-on: ubuntu-latest
     env:
       OPENSSL_TARGET: ${{ matrix.OPENSSL_TARGET }}
@@ -196,6 +196,14 @@ jobs:
           token: ${{ secrets.c8 }}
           body: |
            > ### 编译时间： ${{ env.build_time }}
+
+           压缩包里包含：
+
+           - candy 原版程序
+           - candy_strip 剥离后的程序
+           - candy_upx压缩后的程序
+
+           三个任选一个即可 
 
            **[官方更新说明](https://github.com/lanthora/candy/releases)**
            
