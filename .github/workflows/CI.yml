@@ -69,13 +69,13 @@ jobs:
           tar -czvf candy-linux-${{ env.TARGET }}.tar.gz candy candy_upx candy.cfg
           echo "build_time=$(TZ=UTC-8 date +%Y-%m-%d' '%H:%M:%S)" >> $GITHUB_ENV
       - name: 上传
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: candy-${{ env.TARGET }}
           path: /opt/bin/candy-linux-${{ env.TARGET }}.tar.gz
       - name: 发布 
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.c8 }}
           body: |
@@ -93,8 +93,8 @@ jobs:
           tag_name: ${{ needs.check.outputs.ver }}
           files: /opt/bin/candy-linux-${{ env.TARGET }}.tar.gz
       - name: 删除工作流
-        uses: GitRML/delete-workflow-runs@main
+        uses: GitRML/delete-workflow-runs@v2
         with:
          token: ${{ secrets.c8 }}
          retain_days: 2
-         keep_minimum_runs: 0
+         keep_minimum_runs: 1
