@@ -80,7 +80,7 @@ jobs:
           export CFLAGS="-I /opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/include -L /opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/lib"
           export LDFLAGS="-static $CFLAGS"
 
-          cmake -DCANDY_STATIC=1 -DOPENSSL_TARGET=$OPENSSL_TARGET .
+          cmake -DCANDY_STATIC=1 -DTARGET_OPENSSL=$OPENSSL_TARGET .
           make
           ls -alh ./src/main/candy
           file ./src/main/candy
