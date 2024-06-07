@@ -3,13 +3,13 @@ add_executable(${CANDY_EXECUTE_NAME} ${DIR_SRCS})
 
 set_target_properties(${CANDY_EXECUTE_NAME} PROPERTIES CXX_STANDARD 20)
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR ${CANDY_STATIC})
     include(FetchContent)
 
     FetchContent_Declare(
         argp-standalone
-        GIT_REPOSITORY https://github.com/tom42/argp-standalone.git
-        GIT_TAG        1684ac2e8d75918e5e244057ae4dd01369bed660
+        GIT_REPOSITORY https://github.com/lanthora/argp-standalone.git
+        GIT_TAG        416f73e0badd0089dc759892f6e982dc39fb6fc6
     )
 
     FetchContent_GetProperties(argp-standalone)
@@ -26,12 +26,20 @@ else()
     endif()
 endif()
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(DEPS REQUIRED spdlog libconfig++)
+if (${CANDY_STATIC})
+    include_directories(${libconfig_SOURCE_DIR}/lib)
+    target_link_libraries(${CANDY_EXECUTE_NAME} PRIVATE spdlog::spdlog)
+    target_link_libraries(${CANDY_EXECUTE_NAME} PRIVATE config++)
+    target_link_libraries(${CANDY_EXECUTE_NAME} PRIVATE ${OPENSSL_LIB_CRYPTO} ${OPENSSL_LIB_SSL})
+    target_link_libraries(${CANDY_EXECUTE_NAME} PRIVATE Poco::Foundation Poco::Net Poco::NetSSL)
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(DEPS REQUIRED spdlog libconfig++)
+    add_definitions(${DEPS_CFLAGS})
+    include_directories(${DEPS_INCLUDEDIR})
+    target_link_libraries(${CANDY_EXECUTE_NAME} PRIVATE ${DEPS_LIBRARIES})
+endif()
 
-add_definitions(${DEPS_CFLAGS})
-include_directories(${DEPS_INCLUDEDIR})
-target_link_libraries(${CANDY_EXECUTE_NAME} PRIVATE ${DEPS_LIBRARIES})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -40,6 +48,6 @@ target_link_libraries(${CANDY_EXECUTE_NAME} PRIVATE Threads::Threads)
 target_link_libraries(${CANDY_EXECUTE_NAME} PRIVATE core)
 target_link_libraries(${CANDY_EXECUTE_NAME} PRIVATE utility)
 
-if (NOT DEFINED CANDY_NOEXE OR NOT ${CANDY_NOEXE})
+if (NOT ${CANDY_NOEXE})
     install(TARGETS ${CANDY_EXECUTE_NAME})
 endif()
