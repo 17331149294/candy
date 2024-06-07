@@ -28,17 +28,27 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - TARGET: aarch64
-          - TARGET: armv7l-eabihf
-          - TARGET: armv7m-eabi
-          - TARGET: arm-eabi
-          - TARGET: arm-eabihf
-          - TARGET: mipsel
-          - TARGET: mips
-          - TARGET: i686
-          - TARGET: x86_64
+          - TARGET: aarch64-linux-musl
+            OPENSSL_TARGET: linux-aarch64
+          - TARGET: armv7l-linux-musleabihf
+            OPENSSL_TARGET: linux-armv4
+          - TARGET: armv7m-linux-musleabi
+            OPENSSL_TARGET: linux-armv4
+          - TARGET: arm-linux-musleabi
+            OPENSSL_TARGET: linux-armv4
+          - TARGET: arm-linux-musleabihf
+            OPENSSL_TARGET: linux-armv4
+          - TARGET: mipsel-linux-muslsf
+            OPENSSL_TARGET: linux-mips32
+          - TARGET: mips-linux-muslsf
+            OPENSSL_TARGET: linux-mips32
+          - TARGET: i686-linux-musl
+            OPENSSL_TARGET: linux-generic32
+          - TARGET: x86_64-linux-musl
+            OPENSSL_TARGET: linux-x86_64
     runs-on: ubuntu-latest
     env:
+      OPENSSL_TARGET: ${{ matrix.OPENSSL_TARGET }}
       TARGET: ${{ matrix.TARGET }}
     steps:
       - name: Checkout code
@@ -51,29 +61,43 @@ jobs:
         with:
           version: latest
           install-only: true
+      - name: 下载编译工具链
+        run: |
+          mkdir -p /opt/musl_gcc 
+          sudo timedatectl set-timezone "Asia/Shanghai"
+          wget -q -c https://musl.cc/${{ env.TARGET }}-cross.tgz -P /opt/musl_gcc/
+          tar zxf /opt/musl_gcc/${{ env.TARGET }}-cross.tgz -C /opt/musl_gcc/
       - name: 编译candy
         run: |
           echo "##########################编译candy二进制#################################"
-          export WORKSPACE=/opt
-          export ENABLE_STRIP=1
-          export TARGET=${{ env.TARGET }}
-          ./scripts/build-single-file-exe.sh
-          ls -alh /opt/output/$TARGET
-          file /opt/output/$TARGET/candy
+          export PATH=/opt/musl_gcc/${{ env.TARGET }}-cross/bin:$PATH
+          export CC=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-gcc
+          export CXX=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-g++
+          export AR=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-ar
+          export LD=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-ld
+          export RANLIB=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-ranlib
+          export STRIP=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-strip
+          export CFLAGS="-I /opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/include -L /opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/lib"
+          export LDFLAGS="-static $CFLAGS"
+
+          cmake -DCANDY_STATIC=1 -DOPENSSL_TARGET=$OPENSSL_TARGET .
+          ls ./src/main
+          file ./src/main/candy
           mkdir -p /opt/bin
           cp -rf ./candy.cfg /opt/bin/candy.cfg
-          cp -rf /opt/output/$TARGET/candy /opt/bin/candy
+          cp -rf ./src/main/candy /opt/bin/candy
+          $STRIP /opt/bin/candy
           cd /opt/bin
           cp -rf candy candy_upx
           upx --lzma --best candy_upx
-          tar -czvf candy-linux-${{ env.TARGET }}.tar.gz candy candy_upx candy.cfg
+          tar -czvf candy-${{ env.TARGET }}.tar.gz candy candy_upx candy.cfg
           echo "build_time=$(TZ=UTC-8 date +%Y-%m-%d' '%H:%M:%S)" >> $GITHUB_ENV
       - name: 上传
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: candy-${{ env.TARGET }}
-          path: /opt/bin/candy-linux-${{ env.TARGET }}.tar.gz
+          path: /opt/bin/candy-${{ env.TARGET }}.tar.gz
       - name: 发布 
         uses: softprops/action-gh-release@v2
         with:
@@ -91,7 +115,7 @@ jobs:
            **[官方更新说明](https://github.com/lanthora/candy/releases)**
            
           tag_name: ${{ needs.check.outputs.ver }}
-          files: /opt/bin/candy-linux-${{ env.TARGET }}.tar.gz
+          files: /opt/bin/candy-${{ env.TARGET }}.tar.gz
       - name: 删除工作流
         uses: GitRML/delete-workflow-runs@main
         with:
