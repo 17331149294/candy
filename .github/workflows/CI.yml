@@ -28,167 +28,45 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - TARGET: aarch64-linux-musl
-            OPENSSL_TARGET: linux-aarch64
-          - TARGET: armv7l-linux-musleabihf
-            OPENSSL_TARGET: linux-armv4
-          - TARGET: armv7m-linux-musleabi
-            OPENSSL_TARGET: linux-armv4
-          - TARGET: arm-linux-musleabi
-            OPENSSL_TARGET: linux-armv4
-          - TARGET: arm-linux-musleabihf
-            OPENSSL_TARGET: linux-armv4
-          - TARGET: mipsel-linux-muslsf
-            OPENSSL_TARGET: linux-mips32
-          - TARGET: mips-linux-muslsf
-            OPENSSL_TARGET: linux-mips32
-          - TARGET: i686-linux-musl
-            OPENSSL_TARGET: linux-generic32
-          #- TARGET: x86_64-linux-musl
-            #OPENSSL_TARGET: linux-x86_64
+          - TARGET: aarch64
+          - TARGET: armv7l-eabihf
+          - TARGET: armv7m-eabi
+          - TARGET: arm-eabi
+          - TARGET: arm-eabihf
+          - TARGET: mipsel
+          - TARGET: mips
+          - TARGET: i686
+          - TARGET: x86_64
     runs-on: ubuntu-latest
     env:
-      OPENSSL_TARGET: ${{ matrix.OPENSSL_TARGET }}
       TARGET: ${{ matrix.TARGET }}
     steps:
-      - name: 下载编译工具链
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          repository: lanthora/candy
+          ref: ${{ steps.getversion.outputs.ver }}
+      - name: Install UPX
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          version: latest
+          install-only: true
+      - name: 编译candy
         run: |
-          mkdir -p /opt/musl_gcc 
-          sudo timedatectl set-timezone "Asia/Shanghai"
-          #编译uriparser库提示缺少doxygen graphviz
-          sudo apt-get install doxygen graphviz
-          #下载编译器
-          wget -q -c https://musl.cc/${{ env.TARGET }}-cross.tgz -P /opt/musl_gcc/
-          tar zxf /opt/musl_gcc/${{ env.TARGET }}-cross.tgz -C /opt/musl_gcc/
-          cd /opt/musl_gcc/${{ env.TARGET }}-cross/lib/gcc/${{ env.TARGET }}/11.2.1
-          
-          #克隆candy
-          git clone -b ${{ needs.check.outputs.ver }} https://github.com/lanthora/candy /opt/candy
-          #克隆所需的依赖库
-          wget -q -c https://www.lysator.liu.se/~nisse/misc/argp-standalone-1.4-test2.tar.gz -P /opt/
-          tar -xzf /opt/argp-standalone-1.4-test2.tar.gz -C /opt/
-          mv -f /opt/argp-standalone-1.4-test2 /opt/argp-standalone
-          #git clone https://github.com/ericonr/argp-standalone /opt/argp-standalone
-          git clone https://github.com/uriparser/uriparser /opt/uriparser
-          git clone https://github.com/gabime/spdlog /opt/spdlog
-          git clone https://github.com/pocoproject/poco /opt/poco
-          git clone https://github.com/google/googletest /opt/googletest
-          git clone https://github.com/fmtlib/fmt /opt/fmt
-          git clone https://github.com/hyperrealm/libconfig /opt/libconfig
-          git clone --recursive https://github.com/openssl/openssl /opt/openssl
-          #设置交叉静态编译
-          echo "set(CMAKE_SYSTEM_NAME Linux)" >/opt/toolchain.cmake
-          echo "set(CMAKE_C_COMPILER /opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-gcc)" >>/opt/toolchain.cmake
-          echo "set(CMAKE_CXX_COMPILER /opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-g++)" >>/opt/toolchain.cmake
-          echo 'set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/include -L/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/lib -I/opt/argp-standalone -L/opt/argp-standalone -I/usr/local/include/spdlog ")' >>/opt/toolchain.cmake
-          echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)" >>/opt/toolchain.cmake
-          echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >>/opt/toolchain.cmake
-          echo "set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)" >>/opt/toolchain.cmake
-          
-      - name: 编译依赖库
-        run: |
-          export PATH=/opt/musl_gcc/${{ env.TARGET }}-cross/bin:$PATH
-          export CC=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-gcc
-          export CXX=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-g++
-          export AR=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-ar
-          export LD=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-ld
-          export RANLIB=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-ranlib
-          export STRIP=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-strip
-          #export LD_LIBRARY_PATH=/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/lib:$LD_LIBRARY_PATH
-          #export C_INCLUDE_PATH=/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/include:$C_INCLUDE_PATH
-          
-          cd /opt/argp-standalone
-          echo "#################编译musl的argp依赖库########################"
-          #编译器musl只能单独编译argp库
-          ./configure --host=${{ env.TARGET }} LDFLAGS="-static" CFLAGS="-static" CC=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-gcc
-          make 
-
-          cd /opt/openssl
-          echo "###########################编译openssl依赖库########################"
-          #./Configure no-shared no-async no-threads no-zlib  no-comp no-hw no-engine 
-          ./Configure no-shared no-zlib ${{ env.OPENSSL_TARGET }} LDFLAGS="-static -I/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/include -L/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/lib" CFLAGS="-static -I/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/include -L/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/lib"
-          make -j$(nproc)
-          sudo make install
-
-          export CROSS_COMPILE=/opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-
-
-          cd /opt/poco
-          echo "##############################编译poco依赖库##############################"
-          #去掉不需要的这几个不然这几个报错缺少头文件
-          sed -i 's/option(ENABLE_DATA "Enable Data" ON)/option(ENABLE_DATA "Enable Data" OFF)/g' ./CMakeLists.txt
-          sed -i 's/option(ENABLE_DATA_MYSQL "Enable Data MySQL or MariaDB" ON)/option(ENABLE_DATA_MYSQL "Enable Data MySQL or MariaDB" OFF)/g' ./CMakeLists.txt
-          sed -i 's/option(ENABLE_DATA_POSTGRESQL "Enable Data PosgreSQL" ON)/option(ENABLE_DATA_POSTGRESQL "Enable Data PosgreSQL" OFF)/g' ./CMakeLists.txt
-          sed -i 's/option(ENABLE_DATA_SQLITE "Enable Data SQlite" ON)/option(ENABLE_DATA_SQLITE "Enable Data SQlite" OFF)/g' ./CMakeLists.txt
-          sed -i 's/option(ENABLE_DATA_ODBC "Enable Data ODBC" ON)/option(ENABLE_DATA_ODBC "Enable Data ODBC" OFF)/g' ./CMakeLists.txt
-          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DPOCO_STATIC=ON -DNETSSL=ON -DOPENSSL_ROOT_DIR=/usr/local .
-          make 
-          sudo make install
-
-          cd /opt/googletest
-          echo "################################编译uriparser的test依赖库##################################"
-          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DBUILD_SHARED_LIBS=OFF .
-          make && sudo make install
-          
-          cd /opt/uriparser
-          echo "################################编译uriparser依赖库######################################"
-          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DBUILD_SHARED_LIBS=OFF .
-          make && sudo make install
-          
-          cd /opt/fmt
-          echo "##############################编译fmt依赖库####################################"
-          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake .
-          make && sudo make install
-
-          cd /opt/spdlog
-          echo "################################编译spdlog依赖库###############################"
-          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake .
-          make && sudo make install
-          #使用spdlog的fmt头文件，不然candy报错fmt版本不一致错误
-          sudo cp -rf /usr/local/include/spdlog/fmt/bundled/core.h /usr/local/include/spdlog/fmt/core.h 
-
-          cd /opt/libconfig
-          echo "##################################编译libconfig依赖库#############################"
-          #需要编译静态库
-          sed -i 's/option(BUILD_SHARED_LIBS  "Enable shared library" ON)/option(BUILD_SHARED_LIBS  "Enable shared library" OFF)/g' ./CMakeLists.txt
-          #链接静态gcc库 不然报错缺少libgcc_s动态库
-          cmake -DCMAKE_CXX_FLAGS="-static-libgcc" -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DBUILD_SHARED_LIBS=OFF .
-          make && sudo make install
-          sudo mkdir -p /usr/local/lib/pkgconfig/
-          #安装没有pc文件，写入到路径给candy识别
-          sudo sh -c 'echo "prefix=/usr/local" >/usr/local/lib/pkgconfig/libconfig++.pc'
-          sudo sh -c 'echo "libdir=/usr/local/lib" >>/usr/local/lib/pkgconfig/libconfig++.pc'
-          sudo sh -c 'echo "includedir=/usr/local/include" >>/usr/local/lib/pkgconfig/libconfig++.pc'
-          sudo sh -c 'echo "Name: libconfig++" >>/usr/local/lib/pkgconfig/libconfig++.pc'
-          sudo sh -c 'echo "Description: C++ library for processing configuration files" >>/usr/local/lib/pkgconfig/libconfig++.pc'
-          sudo sh -c 'echo "Version: 1.7.3" >>/usr/local/lib/pkgconfig/libconfig++.pc'
-          sudo sh -c 'echo "Libs: -L/usr/local/lib -lconfig++" >>/usr/local/lib/pkgconfig/libconfig++.pc'
-          sudo sh -c 'echo "Cflags: -I/usr/local/include" >>/usr/local/lib/pkgconfig/libconfig++.pc'
-
-          cd /opt/candy
           echo "##########################编译candy二进制#################################"
-          #需要链接静态gcc库 不然报错缺少libgcc_s动态库 指定所有依赖库路径不然报错找不到
-          sed -i 's|-Wall -Wfatal-errors|-Wall -Wfatal-errors -static -I/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/include -L/opt/musl_gcc/${{ env.TARGET }}-cross/${{ env.TARGET }}/lib -I/opt/argp-standalone -L/opt/argp-standalone -I/usr/local/include/spdlog -I/usr/local/include -L/usr/local/lib -largp -static-libgcc|g' ./CMakeLists.txt
-          #使用musl需要这个单独编译的argp
-          sed -i '/find_package(PkgConfig REQUIRED)/i link_directories(/opt/argp-standalone)' ./src/main/CMakeLists.txt
-          sed -i '/find_package(PkgConfig REQUIRED)/i target_link_libraries($\{CMAKE_PROJECT_NAME\} PRIVATE argp)' ./src/main/CMakeLists.txt
-          cmake -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain.cmake -DARGP_LIB=/opt/argp-standalone/libargp.a .
-          make
-          ls ./src/main
-          file ./src/main/candy
+          export WORKSPACE=/opt
+          export ENABLE_STRIP=1
+          export TARGET=${{ env.TARGET }}
+          ./scripts/build-single-file-exe.sh
+          ls -alh /opt/output/$TARGET
+          file /opt/output/$TARGET/candy
           mkdir -p /opt/bin
           cp -rf ./candy.cfg /opt/bin/candy.cfg
-          cp -rf ./src/main/candy /opt/bin/candy
+          cp -rf /opt/output/$TARGET/candy /opt/bin/candy
           cd /opt/bin
-          cp -rf candy candy_strip
-          #剥离
-          /opt/musl_gcc/${{ env.TARGET }}-cross/bin/${{ env.TARGET }}-strip candy_strip
-          cp -rf candy_strip candy_upx
-          wget -q -c https://github.com/upx/upx/releases/download/v4.2.3/upx-4.2.3-amd64_linux.tar.xz -P /opt/
-          tar -xvf /opt/upx-4.2.3-amd64_linux.tar.xz -C /opt/
-          /opt/upx-4.2.3-amd64_linux/upx --version
-          #压缩
-          /opt/upx-4.2.3-amd64_linux/upx candy_upx
-          tar -czvf candy-${{ env.TARGET }}.tar.gz candy candy_upx candy_strip candy.cfg
+          cp -rf candy candy_upx
+          upx --lzma --best candy_upx
+          tar -czvf candy-linux-${{ env.TARGET }}.tar.gz candy candy_upx candy.cfg
           echo "build_time=$(TZ=UTC-8 date +%Y-%m-%d' '%H:%M:%S)" >> $GITHUB_ENV
       - name: 发布 
         uses: softprops/action-gh-release@v1
@@ -200,10 +78,9 @@ jobs:
            *.tar.gz二进制压缩包里包含：
 
            - candy 原版程序
-           - candy_strip 剥离后的程序
            - candy_upx压缩后的程序
 
-           三个任选一个即可 
+           二个任选一个即可 
 
            **[官方更新说明](https://github.com/lanthora/candy/releases)**
            
