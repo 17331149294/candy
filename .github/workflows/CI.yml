@@ -81,7 +81,8 @@ jobs:
           export LDFLAGS="-static $CFLAGS"
 
           cmake -DCANDY_STATIC=1 -DOPENSSL_TARGET=$OPENSSL_TARGET .
-          ls ./src/main
+          make
+          ls -alh ./src/main/candy
           file ./src/main/candy
           mkdir -p /opt/bin
           cp -rf ./candy.cfg /opt/bin/candy.cfg
