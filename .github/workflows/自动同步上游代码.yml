@@ -22,10 +22,10 @@ jobs:
       - name: 执行同步
         uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
         with:
-          upstream_sync_repo: lanthora/candy  #上游用户名及仓库名
+          upstream_sync_repo: lanthora/candy  #上游用户名/仓库名
           upstream_sync_branch: master   #上游分支名
           target_sync_branch: master  #当前仓库分支名
-          target_repo_token: ${{ secrets.GITHUB_TOKEN }} # 自动生成token，无需手动设置
+          target_repo_token: ${{ secrets.c8 }} # 自动生成token，无需手动设置
           exclude: .github/workflows/**     #跳过.github/workflows/目录下文件不同步
 
           # 如果将 test_mode 设置为 true 就会测试运行而不是同步实际操作并不会修改代码
