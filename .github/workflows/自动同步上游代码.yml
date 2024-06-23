@@ -35,5 +35,6 @@ jobs:
       - name: 检查同步状态
         if: failure()
         run: |
-          echo "[错误] 由于上游仓库的 workflow 文件变更，导致 GitHub 自动暂停了本次自动更新，你需要手动执行一次同步上游代码。"
+          echo "[错误] 由于上游仓库变更了.github/workflows/*文件夹里的文件，导致此自动同步任务无法完成本次自动更新，你需要手动执行一次同步上游代码。"
+          echo "[错误] github自动生成的GITHUB_TOKEN 不具有写入.github/workflows/*权限，若需要写入请手动创建具有权限的token"
           exit 1
