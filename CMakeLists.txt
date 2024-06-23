@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18.4)
 
-project(candy LANGUAGES C CXX VERSION 5.8.7)
+project(candy LANGUAGES C CXX VERSION 5.8.10)
 
 option(CANDY_NOEXE  "Don't build executable")
 option(CANDY_DEVEL  "Build development library")
@@ -16,11 +16,11 @@ if (${CANDY_STATIC})
 
     # openssl
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/openssl
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/openssl
     )
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -DTARGET_OPENSSL=${TARGET_OPENSSL} ${CMAKE_SOURCE_DIR}/cmake/openssl
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/openssl
+        COMMAND ${CMAKE_COMMAND} -DTARGET_OPENSSL=${TARGET_OPENSSL} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/openssl
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/openssl
         RESULT_VARIABLE result
     )
     if(NOT result EQUAL "0")
@@ -28,7 +28,7 @@ if (${CANDY_STATIC})
     endif()
 
     execute_process(
-        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}/openssl
+        COMMAND ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR}/openssl
         RESULT_VARIABLE result
     )
     if(NOT result EQUAL "0")
@@ -40,7 +40,7 @@ if (${CANDY_STATIC})
     if(nproc EQUAL 0)
         set(nproc 1)
     endif()
-    set(OPENSSL_ROOT_DIR ${CMAKE_BINARY_DIR}/openssl/openssl/src/openssl)
+    set(OPENSSL_ROOT_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl/openssl/src/openssl)
     execute_process(
         COMMAND make -j${nproc}
         WORKING_DIRECTORY ${OPENSSL_ROOT_DIR}
@@ -50,7 +50,7 @@ if (${CANDY_STATIC})
         message(FATAL_ERROR "OpenSSL Build failed")
     endif()
 
-    set(OPENSSL_ROOT_DIR ${CMAKE_BINARY_DIR}/openssl/openssl/src/openssl)
+    set(OPENSSL_ROOT_DIR ${CMAKE_CURRENT_BINARY_DIR}/openssl/openssl/src/openssl)
     set(OPENSSL_INCLUDE ${OPENSSL_ROOT_DIR}/include)
     set(OPENSSL_LIB_CRYPTO ${OPENSSL_ROOT_DIR}/libcrypto.a)
     set(OPENSSL_LIB_SSL ${OPENSSL_ROOT_DIR}/libssl.a)
@@ -78,20 +78,6 @@ if (${CANDY_STATIC})
     if(NOT spdlog_POPULATED)
         FetchContent_Populate(spdlog)
         add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
-
-    # libconfig
-    set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    FetchContent_Declare(
-        libconfig
-        GIT_REPOSITORY https://github.com/hyperrealm/libconfig.git
-        GIT_TAG v1.7.3
-    )
-    FetchContent_GetProperties(libconfig)
-    if(NOT libconfig_POPULATED)
-        FetchContent_Populate(libconfig)
-        add_subdirectory(${libconfig_SOURCE_DIR} ${libconfig_BINARY_DIR} EXCLUDE_FROM_ALL)
     endif()
 
     # poco

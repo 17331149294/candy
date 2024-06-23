@@ -13,6 +13,7 @@ jobs:
         uses: jidicula/clang-format-action@v4.11.0
         with:
           check-path: 'src'
+          exclude-regex: 'src/utility/argparse.h'
 
   docker:
     runs-on: ubuntu-latest
@@ -26,7 +27,7 @@ jobs:
     runs-on: macos-13
     steps:
     - name: depends
-      run: brew install libconfig spdlog poco argp-standalone
+      run: brew install spdlog poco
     - name: checkout
       uses: actions/checkout@v4
     - name: build
@@ -47,7 +48,6 @@ jobs:
           mingw-w64-x86_64-cmake
           mingw-w64-x86_64-ninja
           mingw-w64-x86_64-gcc
-          mingw-w64-x86_64-libconfig
           mingw-w64-x86_64-spdlog
           mingw-w64-x86_64-poco
     - name: checkout
@@ -93,4 +93,4 @@ jobs:
         docker-image: ${{ matrix.image }}
         buildpackage-opts: --build=binary --no-sign
         extra-build-deps: git-buildpackage
-        before-build-hook: dch --package candy -v "$(git tag -l | tail -n1 | sed 's/v//g')+${{ env.ARTIFACT_NAME }}" -D stable --create "CI BUILD"
+        before-build-hook: dch --package candy -v "$(git tag --sort=-creatordate | head -n1 | sed 's/v//g')+${{ env.ARTIFACT_NAME }}" -D stable --create "CI BUILD"
