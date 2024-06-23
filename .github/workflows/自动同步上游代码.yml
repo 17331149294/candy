@@ -3,7 +3,7 @@ name: 同步上游代码
 #设置工作流具有写入的权限
 permissions:
   contents: write
-  checks: write
+  actions: write
 
 on:
   schedule:
