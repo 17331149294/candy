@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: 将当前仓库设为工作目录路径
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 执行同步
         uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
