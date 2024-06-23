@@ -1,8 +1,7 @@
 name: 同步上游代码
 
 #设置工作流具有写入的权限
-permissions:
-  contents: write
+permissions: write-all
 
 on:
   schedule:
@@ -28,7 +27,7 @@ jobs:
           target_repo_token: ${{ secrets.GITHUB_TOKEN }} # 自动生成token，无需手动设置
 
           # 如果将 test_mode 设置为 true 就会测试运行而不是同步实际操作并不会修改代码
-          test_mode: true
+          test_mode: false
 
       - name: 检查同步状态
         if: failure()
