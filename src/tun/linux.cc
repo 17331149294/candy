@@ -178,6 +178,43 @@ public:
         return ::write(this->tunFd, buffer.c_str(), buffer.size());
     }
 
+    int setSysRtTable(uint32_t dst, uint32_t mask, uint32_t nexthop) {
+        if (nexthop == this->ip) {
+            return 0;
+        }
+        int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+        if (sockfd == -1) {
+            spdlog::error("set route failed: create socket failed");
+            return -1;
+        }
+
+        struct sockaddr_in *addr;
+        struct rtentry route;
+        memset(&route, 0, sizeof(route));
+
+        addr = (struct sockaddr_in *)&route.rt_dst;
+        addr->sin_family = AF_INET;
+        addr->sin_addr.s_addr = Candy::Address::hostToNet(dst);
+
+        addr = (struct sockaddr_in *)&route.rt_genmask;
+        addr->sin_family = AF_INET;
+        addr->sin_addr.s_addr = Candy::Address::hostToNet(mask);
+
+        addr = (struct sockaddr_in *)&route.rt_gateway;
+        addr->sin_family = AF_INET;
+        addr->sin_addr.s_addr = Candy::Address::hostToNet(nexthop);
+
+        route.rt_flags = RTF_UP | RTF_GATEWAY;
+        if (ioctl(sockfd, SIOCADDRT, &route) == -1) {
+            spdlog::error("set route failed: ioctl failed");
+            close(sockfd);
+            return -1;
+        }
+
+        close(sockfd);
+        return 0;
+    }
+
 private:
     std::string name;
     uint32_t ip;
@@ -270,6 +307,17 @@ int Tun::write(const std::string &buffer) {
     std::shared_ptr<LinuxTun> tun;
     tun = std::any_cast<std::shared_ptr<LinuxTun>>(this->impl);
     return tun->write(buffer);
+}
+
+int Tun::setSysRtTable(uint32_t dst, uint32_t mask, uint32_t nexthop) {
+    std::string dstStr = Address::ipToStr(dst);
+    std::string maskStr = Address::ipToStr(mask);
+    std::string nextStr = Address::ipToStr(nexthop);
+    spdlog::info("system route: dst={} mask={} next={}", dstStr, maskStr, nextStr);
+
+    std::shared_ptr<LinuxTun> tun;
+    tun = std::any_cast<std::shared_ptr<LinuxTun>>(this->impl);
+    return tun->setSysRtTable(dst, mask, nexthop);
 }
 
 } // namespace Candy
