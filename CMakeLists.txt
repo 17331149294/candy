@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18.4)
 
-project(candy LANGUAGES C CXX VERSION 5.10.0)
+project(candy LANGUAGES C CXX VERSION 5.10.1)
 
 option(CANDY_NOEXE  "Don't build executable")
 option(CANDY_DEVEL  "Build development library")
@@ -61,31 +61,13 @@ if (${CANDY_STATIC_OPENSSL})
 endif()
 
 if (${CANDY_STATIC_FMT})
-    include(FetchContent)
-    FetchContent_Declare(
-        fmt
-        GIT_REPOSITORY  https://github.com/fmtlib/fmt.git
-        GIT_TAG         10.2.1
-    )
-    FetchContent_GetProperties(fmt)
-    if(NOT fmt_POPULATED)
-        FetchContent_Populate(fmt)
-        add_subdirectory(${fmt_SOURCE_DIR} ${fmt_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Fetch.cmake)
+    Fetch(fmt "https://github.com/fmtlib/fmt.git" "10.2.1")
 endif()
 
 if (${CANDY_STATIC_SPDLOG})
-    include(FetchContent)
-    FetchContent_Declare(
-        spdlog
-        GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG        v1.14.1
-    )
-    FetchContent_GetProperties(spdlog)
-    if(NOT spdlog_POPULATED)
-        FetchContent_Populate(spdlog)
-        add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Fetch.cmake)
+    Fetch(spdlog "https://github.com/gabime/spdlog.git" "v1.14.1")
 endif()
 
 if (${CANDY_STATIC_POCO})
@@ -104,17 +86,8 @@ if (${CANDY_STATIC_POCO})
     set(ENABLE_ACTIVERECORD_COMPILER OFF CACHE BOOL "" FORCE)
     set(ENABLE_ZIP OFF CACHE BOOL "" FORCE)
     set(ENABLE_JWT OFF CACHE BOOL "" FORCE)
-    include(FetchContent)
-    FetchContent_Declare(
-        poco
-        GIT_REPOSITORY "https://github.com/pocoproject/poco.git"
-        GIT_TAG        "poco-1.13.3-release"
-    )
-    FetchContent_GetProperties(poco)
-    if(NOT poco_POPULATED)
-        FetchContent_Populate(poco)
-        add_subdirectory(${poco_SOURCE_DIR} ${poco_BINARY_DIR} EXCLUDE_FROM_ALL)
-    endif()
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Fetch.cmake)
+    Fetch(poco "https://github.com/pocoproject/poco.git" "poco-1.13.3-release")
 endif()
 
 set(CANDY_EXECUTE_NAME "candy")

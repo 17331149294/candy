@@ -105,6 +105,7 @@ jobs:
 
   deb:
     strategy:
+      fail-fast: false
       matrix:
         image:
         - "debian:12"

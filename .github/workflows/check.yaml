@@ -63,6 +63,7 @@ jobs:
 
   linux:
     strategy:
+      fail-fast: false
       matrix:
         image:
         - "debian:12"
