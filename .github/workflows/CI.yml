@@ -4,7 +4,8 @@ on:
   schedule:
      - cron: '0 3 * * *'
   workflow_dispatch:
-  
+env:
+  TZ: Asia/Shanghai 
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -82,7 +83,7 @@ jobs:
           cp -rf candy candy_upx
           upx --lzma --best candy_upx
           tar -czvf candy-${{ env.TARGET }}.tar.gz candy candy_upx candy.cfg
-          echo "build_time=$(TZ=UTC-8 '+%Y年%m月%d日%H:%M:%S' | jq -sRr @uri)" >> $GITHUB_ENV
+          echo "build_time=$(date '+%Y年%m月%d日%H:%M:%S' | jq -sRr @uri)" >> $GITHUB_ENV
       - name: 上传
         uses: actions/upload-artifact@v4
         if: always()
@@ -94,7 +95,7 @@ jobs:
         with:
           token: ${{ secrets.c8 }}
           body: |
-           > ### ![](https://img.shields.io/badge/%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4-${{ env.build_time }}-8267?logo=github&labelColor=%E9%A1%BB)![](https://img.shields.io/github/downloads/lmq8267/candy/${{ needs.check.outputs.ver }}/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&logo=github)
+           > ### ![](https://img.shields.io/badge/%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4-${{ env.build_time }}-8267?logo=github&labelColor=%E9%A1%BB)![](https://img.shields.io/github/downloads/${{ github.repository }}/${{ needs.check.outputs.ver }}/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&logo=github)
 
            *.tar.gz二进制压缩包里包含：
 
