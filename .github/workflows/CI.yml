@@ -1,30 +1,13 @@
 name: A编译candy
 
 on:
-  schedule:
-     - cron: '0 3 * * *'
+  # 只通过手动触发
   workflow_dispatch:
 env:
-  TZ: Asia/Shanghai 
+  TZ: Asia/Shanghai
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    outputs:
-      ver: ${{ steps.getversion.outputs.ver }}
-      cver: ${{ steps.getversion.outputs.cver }}
-    steps:
-      -
-        name: 版本比较
-        id: getversion
-        run: |
-          ver=`curl https://api.github.com/repos/lanthora/candy/releases/latest | jq -r '.tag_name'`
-          cver=`curl https://api.github.com/repos/lmq8267/candy/releases/latest | jq -r '.tag_name'`
-          echo "ver=${ver}" >> $GITHUB_OUTPUT
-          echo "cver=${cver}" >> $GITHUB_OUTPUT
-
   build:
-    needs: check
-    if: ${{ needs.check.outputs.ver != needs.check.outputs.cver }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -47,7 +30,6 @@ jobs:
             OPENSSL_TARGET: linux-generic32
           - TARGET: x86_64-linux-musl
             OPENSSL_TARGET: linux-x86_64
-    runs-on: ubuntu-latest
     env:
       OPENSSL_TARGET: ${{ matrix.OPENSSL_TARGET }}
       TARGET: ${{ matrix.TARGET }}
@@ -55,22 +37,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          repository: lanthora/candy
+          # 从当前仓库获取代码
+          repository: ${{ github.repository }}
           ref: master
       - name: Install UPX
         uses: crazy-max/ghaction-upx@v3
         with:
           version: latest
           install-only: true
-      - name: 下载gcc
+      - name: 下载gcc # Download GCC
         uses: lmq8267/dl-musl@main
         with:
           target: ${{ env.TARGET }}
           static: true
-      - name: 编译candy
+      - name: 编译candy # Compile Candy
         run: |
-          echo "##########################编译candy二进制#################################"
-
+          echo "##########################编译candy二进制#################################" # Compiling Candy Binary
           cmake -DCANDY_STATIC=1 -DTARGET_OPENSSL=$OPENSSL_TARGET -DCMAKE_BUILD_TYPE=Release .
           make -j$(nproc)
           ls -alh ./src/main/candy
@@ -84,39 +66,38 @@ jobs:
           upx --lzma --best candy_upx
           tar -czvf candy-${{ env.TARGET }}.tar.gz candy candy_upx candy.cfg
           echo "build_time=$(date '+%Y年%m月%d日%H:%M:%S' | jq -sRr @uri)" >> $GITHUB_ENV
-      - name: 上传
+      - name: 上传 # Upload
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: candy-${{ env.TARGET }}
           path: /opt/bin/candy-${{ env.TARGET }}.tar.gz
-      - name: 发布 
+      - name: 发布 # Release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.c8 }}
+          # 发布说明
           body: |
-           > ### ![](https://img.shields.io/badge/%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4-${{ env.build_time }}-8267?logo=github&labelColor=%E9%A1%BB)![](https://img.shields.io/github/downloads/${{ github.repository }}/${{ needs.check.outputs.ver }}/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&logo=github)
+            > ### ![](https://img.shields.io/badge/%E7%BC%96%E8%AF%91%E6%97%B6%E9%97%B4-${{ env.build_time }}-8267?logo=github&labelColor=%E9%A1%BB)
 
-           *.tar.gz二进制压缩包里包含：
+            *.tar.gz二进制压缩包里包含： # .tar.gz binary compressed package includes:
 
-           - candy 原版程序
-           - candy_upx压缩后的程序
+            - candy 原版程序 # original candy program
+            - candy_upx压缩后的程序 # candy_upx compressed program
 
-           二个任选一个即可 
-
-           **[官方更新说明](https://github.com/lanthora/candy/releases)**
-           
-          tag_name: ${{ needs.check.outputs.ver }}
+            二个任选一个即可 # Choose one of the two
+          # 使用工作流运行编号作为标签
+          tag_name: v${{ github.run_number }}
           files: /opt/bin/candy-${{ env.TARGET }}.tar.gz
-      - name: 删除工作流
+      - name: 删除工作流 # Delete Workflow
         uses: GitRML/delete-workflow-runs@main
         with:
-         token: ${{ secrets.c8 }}
-         retain_days: 2
-         keep_minimum_runs: 1
+          token: ${{ secrets.c8 }}
+          retain_days: 2
+          keep_minimum_runs: 1
   keepalive-workflow:
     # github超过60天未提交将自动停止工作流
-    name: 工作流保活 
+    name: 工作流保活 # Workflow Keep-Alive
     runs-on: ubuntu-latest
     permissions:
       actions: write
